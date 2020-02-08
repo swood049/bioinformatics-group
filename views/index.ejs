@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+  </head>
+  <body>
+    <h1><%= title %></h1>
+    <p>Welcome to <%= title %></p>
+    <input type="file" id="fileUpload" name="protein-sequence" />
+    <button class="beginningSpot" onclick="fileUpload()">Upload the file</button>
+  </body>
+  <script>
+    
+  const fileUpload = event => {
+    const formData = new FormData()
+    formData.append('protein-sequence', document.querySelector("#fileUpload").files[0])
+
+    fetch('/saveImage', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log(data)
+      document.querySelector(".beginningSpot").innerHTML += data;
+    })
+    .catch(error => {
+      console.error(error)
+    })
+  }
+  </script>
+</html>
