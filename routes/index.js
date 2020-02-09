@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const https = require('https');
+const request = require('request');
 const fs = require("fs");
 const multer = require('multer');
 var storage = multer.diskStorage({
@@ -39,28 +39,19 @@ router.post('/saveImage', upload.single('protein-sequence'), (req, res, next)=>{
     fs.readFile(`./protein-coding-sequence/${filesArray[filesArray.length - 1]}`,(error, data)=>{
         let proteinString = data.toString();
         proteinString = proteinString.replace(/(\r\n|\n|\r)/gm, "");
-        let baseUrl = "blast.ncbi.nlm.nih.gov"
-        let specificPath = `/Blast.cgi?CMD=Put&QUERY=${proteinString}&PROGRAM=blastp&DATABASE=pdb`
-        const options = {
-          family: 4,
-          hostname: baseUrl,
-          path: specificPath,
-          method: 'PUT'
-        };
-        
-        const request = https.request(options, (response) => {
-          console.log('statusCode:', response.statusCode);
-          console.log('headers:', response.headers);
-        
-          response.on('data', (d) => {
-            res.json(d.toString());
-          });
-        });
-        
-        request.on('error', (e) => {
-          console.error(e);
-        });
-        request.end();
+        request.put(`https://blast.ncbi.nlm.nih.gov/Blast.cgi?CMD=Put&QUERY=${proteinString}&PROGRAM=blastp&DATABASE=pdb`, (err, res, body)=>{
+          // console.log(body[body.search('<input name="RID" value="')]);
+          let code = body.slice(body.search('<input name="RID" value="') + 25, body.search('<input name="RID" value="') + 36)
+          setTimeout(()=>{
+            let newBody = request(`https://blast.ncbi.nlm.nih.gov/Blast.cgi?CMD=Get&RID=${code}`);
+            console.log(newBody)
+            setTimeout(()=>{
+              let finalBody = request(`https://blast.ncbi.nlm.nih.gov/Blast.cgi?CMD=Get&VIEW_RESULTS=FromRes&RID=${code}&FORMAT_TYPE=JSON`);
+              console.log(finalBody);
+            }, 30000)
+          }, 60000);
+          
+        })
     })
   })
 
